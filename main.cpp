@@ -4,10 +4,25 @@
 #include <vector>
 #include <string>
 #include <iomanip>
+#include <limits>
 
 using namespace std;
 
-// Функция для чтения любого файла (в т.ч. бинарного)
+// === ПЕРЕЧИСЛЕНИЯ ДЛЯ АРХИТЕКТУРЫ ===
+
+enum class CipherAlgorithm {
+    AES_128_CFB = 1,
+    DES_CBC = 2,  // Ваш шифр
+    RC4 = 3       // Ваш шифр
+};
+
+enum class InputMode {
+    CONSOLE = 1,
+    FILE = 2
+};
+
+// === БАЗОВЫЕ ФУНКЦИИ ФАЙЛОВОГО ВВОДА/ВЫВОДА ===
+
 vector<unsigned char> readFile(const string& filename) {
     ifstream file(filename, ios::binary);
     if (!file) {
@@ -17,7 +32,6 @@ vector<unsigned char> readFile(const string& filename) {
     return vector<unsigned char>((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
 }
 
-// Функция для записи любого файла (в т.ч. бинарного)
 void writeFile(const string& filename, const vector<unsigned char>& data) {
     ofstream file(filename, ios::binary);
     if (!file) {
@@ -27,16 +41,18 @@ void writeFile(const string& filename, const vector<unsigned char>& data) {
     file.write(reinterpret_cast<const char*>(data.data()), data.size());
 }
 
-void runConsoleMode() {
+
+// === ЛОГИКА ДЛЯ AES-128 CFB ===
+
+void runAesCfbConsole() {
     unsigned char key[16];
     generateRandomKey(key);
     
-    cout << "\nСгенерированный случайный ключ: ";
+    cout << "\n[AES-128 CFB] Сгенерированный случайный ключ: ";
     printHex(key, 16);
     
     cout << "Введите текст для шифрования: ";
     string original;
-    cin.ignore();
     getline(cin, original);
 
     vector<unsigned char> plain;
@@ -66,9 +82,9 @@ void runConsoleMode() {
     cout << "=== РЕЗУЛЬТАТ ===\nРасшифрованный текст: " << result << "\n";
 }
 
-void runFileMode() {
+void runAesCfbFile() {
     string filename;
-    cout << "\nВведите имя файла (с расширением, например test.jpg или text.txt): ";
+    cout << "\n[AES-128 CFB] Введите имя файла (например, test.jpg или text.txt): ";
     cin >> filename;
 
     vector<unsigned char> plain = readFile(filename);
@@ -84,19 +100,17 @@ void runFileMode() {
     unsigned char iv[16];
     GenerateIV(iv);
 
-    // Паддинг и Шифрование
     AddPKCS7Padding(plain);
     vector<unsigned char> textCript;
     
     cout << "Шифрование... (пожалуйста, подождите)\n";
-    // verbose = false, чтобы не засорять консоль миллионами строк
+    // verbose = false, чтобы не засорять консоль
     EncryptCFB(plain, textCript, key, iv, false);
 
     string encFilename = "encrypted_" + filename;
     writeFile(encFilename, textCript);
-    cout << "Зашифрованные данные сохранены в файл: " << encFilename << "\n";
+    cout << "Зашифрованные данные сохранены в: " << encFilename << "\n";
 
-    // Расшифрование
     cout << "Расшифровка...\n";
     vector<unsigned char> decrypted;
     DecryptCFB(textCript, decrypted, key);
@@ -104,27 +118,73 @@ void runFileMode() {
 
     string decFilename = "decrypted_" + filename;
     writeFile(decFilename, decrypted);
-    cout << "Восстановленные данные сохранены в файл: " << decFilename << "\n";
-    cout << "Готово! Проверьте файлы.\n";
+    cout << "Восстановленные данные сохранены в: " << decFilename << "\n";
 }
+
+//добавить собственную логику для каждого шифра
+
+// === ГЛАВНАЯ ФУНКЦИЯ ПРОГРАММЫ ===
 
 int main() {
     setlocale(LC_ALL, "ru_RU.UTF-8");
     
-    cout << "=== AES-128 CFB ===\n";
-    cout << "1. Ввод текста из консоли\n";
-    cout << "2. Шифрование файла (txt, mp3, jpeg и др.)\n";
-    cout << "Выберите режим (1 или 2): ";
+    // 1. Выбор алгоритма
+    cout << "=== ВЫБОР АЛГОРИТМА ШИФРОВАНИЯ ===\n";
+    cout << "1. AES-128 CFB\n";
+    cout << "2. (ваш шифр)\n";
+    cout << "3. (ваш шифр)\n";
+    cout << "Ваш выбор: ";
     
-    int choice;
-    if (cin >> choice) {
-        if (choice == 1) {
-            runConsoleMode();
-        } else if (choice == 2) {
-            runFileMode();
-        } else {
-            cout << "Неверный выбор.\n";
-        }
+    int algoChoice;
+    if (!(cin >> algoChoice)) {
+        cout << "Ошибка ввода.\n";
+        return 1;
+    }
+    CipherAlgorithm algo = static_cast<CipherAlgorithm>(algoChoice);
+
+    // 2. Выбор режима работы
+    cout << "\n=== ВЫБОР ИСТОЧНИКА ДАННЫХ ===\n";
+    cout << "1. Ввод текста из консоли\n";
+    cout << "2. Работа с файлом (txt, mp3, jpg, и др.)\n";
+    cout << "Ваш выбор: ";
+    
+    int modeChoice;
+    if (!(cin >> modeChoice)) {
+        cout << "Ошибка ввода.\n";
+        return 1;
+    }
+    InputMode mode = static_cast<InputMode>(modeChoice);
+
+    // Очистка буфера после ввода чисел (необходимо перед getline)
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    // 3. Вызов нужного алгоритма
+    switch (algo) {
+        
+        case CipherAlgorithm::AES_128_CFB:
+            if (mode == InputMode::CONSOLE) {
+                runAesCfbConsole();
+            } else if (mode == InputMode::FILE) {
+                runAesCfbFile();
+            } else {
+                cout << "Неверный режим работы.\n";
+            }
+            break;
+
+        case CipherAlgorithm::DES_CBC:
+            cout << "\n[DES CBC] Извините, алгоритм еще не подключен к системе.\n";
+            // В будущем здесь будет: 
+            // if (mode == InputMode::CONSOLE) runDesConsole(); 
+            // и т.д.
+            break;
+
+        case CipherAlgorithm::RC4:
+            cout << "\n[RC4] Извините, алгоритм еще не подключен к системе.\n";
+            break;
+
+        default:
+            cout << "\nОшибка: Выбран неизвестный алгоритм шифрования.\n";
+            break;
     }
 
     return 0;
