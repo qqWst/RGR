@@ -113,7 +113,7 @@ bool is_prime(uint64_t N, vector<int>& usedPrimes) {
 }
 
 // Публичная функция
-uint64_t generate_prime(int bits) {
+uint64_t generatePrime(int bits) {
     if (bits < 4 || bits > 32) return 0;
     
     const vector<int> primes = sieve_primes(500);

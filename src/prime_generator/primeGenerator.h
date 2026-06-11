@@ -12,6 +12,6 @@
  * @param bits Битовая длина (4-32)
  * @return Простое число или 0 при ошибке
  */
-uint64_t generate_prime(int bits);
+uint64_t generatePrime(int bits);
 
 #endif

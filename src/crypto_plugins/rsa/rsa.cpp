@@ -1,4 +1,3 @@
-#include <cstdint>
 #include <algorithm>
 
 #include "../pluginInterface.h"
@@ -39,9 +38,9 @@ bool parseRSAKey(const std::string& key_str, uint64_t& n, uint64_t& e) {
 KeyPair keyGeneration() {
     KeyPair keys;
 
-    uint64_t p = generate_prime(16);
-    uint64_t q = generate_prime(16);
-    while (p == q) q = generate_prime(16);
+    uint64_t p = generatePrime(16);
+    uint64_t q = generatePrime(16);
+    while (p == q) q = generatePrime(16);
 
     uint64_t n = p * q; 
     uint64_t phi = (p - 1) * (q - 1);
@@ -73,7 +72,7 @@ std::vector<uint64_t> encrypt(const std::string& text, KeyPair keys)
     return result;
 }
 
-std::string decrypt(const std::vector<uint64_t>& text, KeyPair keys) 
+std::string decrypt(const std::vector<uint64_t>& cipherText, KeyPair keys) 
 {
     std::string result;
     uint64_t d, n;
