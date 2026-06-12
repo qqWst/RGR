@@ -19,9 +19,9 @@ int main() {
             return 1;
         }
 
-        // Шаг 3: загрузка плагинов
+        // Шаг 3: загрузка плагинов - ИСПРАВЛЕННЫЙ ПУТЬ
         std::cout << "Загрузка плагинов..." << std::endl;
-        std::vector<CryptoPlugin> plugins = loadAllPlugins("plugins");
+        std::vector<CryptoPlugin> plugins = loadAllPlugins("build/plugins");  // ← ИЗМЕНЕНО
         std::cout << "Загружено: " << plugins.size() << std::endl;
 
         // Шаг 4: главное меню
