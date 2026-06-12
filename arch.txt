@@ -1,0 +1,23 @@
+crypto_app/
+├── Makefile
+├── include/
+│   ├── cryptoApi.h
+│   ├── libraryLoader.h
+│   ├── textProcessor.h
+│   ├── fileProcessor.h
+│   ├── keyGenerator.h
+│   ├── menu.h
+│   └── utils.h
+├── src/
+│   ├── main.cpp
+│   ├── libraryLoader.cpp
+│   ├── textProcessor.cpp
+│   ├── fileProcessor.cpp
+│   ├── keyGenerator.cpp
+│   ├── menu.cpp
+│   └── utils.cpp
+└── plugins/
+    ├── rsaCipher.cpp
+    ├── xorCipher.cpp
+    ├── rabinCipher.cpp
+    └── shamirCipher.cpp
