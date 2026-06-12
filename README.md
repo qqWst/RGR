@@ -56,13 +56,13 @@ sentinel/
 │   ├── rsa.txt                     # Ключи RSA
 │   └── shamir.txt                  # Ключи Shamir
 │
-├── plugins/                        # Исходный код плагинов
-│   ├── diffie-hellman.cpp
-│   ├── fiatShamir.cpp
-│   ├── rabinCipher.cpp
-│   ├── rsaCipher.cpp
-│   ├── shamirCipher.cpp
-│   └── xorCipher.cpp
+├── plugins/ # Исходный код плагинов
+│ ├── diffie-hellmanCipher.cpp # Diffie-Hellman
+│ ├── fiatShamirCipher.cpp # Fiat-Shamir
+│ ├── rabinCipher.cpp # Rabin
+│ ├── rsaCipher.cpp # RSA
+│ ├── shamirCipher.cpp # Shamir
+│ └── xorCipher.cpp # XOR
 │
 ├── src/                            # Исходный код приложения
 │   ├── fileProcessor.cpp
