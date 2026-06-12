@@ -21,7 +21,7 @@ int main() {
 
         // Шаг 3: загрузка плагинов
         std::cout << "Загрузка плагинов..." << std::endl;
-        std::vector<CryptoPlugin> plugins = loadAllPlugins("build/plugins");
+        std::vector<CryptoPlugin> plugins = loadAllPlugins("plugins");
         std::cout << "Загружено: " << plugins.size() << std::endl;
 
         // Шаг 4: главное меню
