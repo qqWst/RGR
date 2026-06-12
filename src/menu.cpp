@@ -1,8 +1,8 @@
-#include "menu.h"
-#include "textProcessor.h"
-#include "fileProcessor.h"
-#include "keyGenerator.h"
-#include "utils.h"
+#include "../include/menu.h"
+#include "../include/textProcessor.h"
+#include "../include/fileProcessor.h"
+#include "../include/keyGenerator.h"
+#include "../include/utils.h"
 #include <iostream>
 
 static int selectPlugin(const std::vector<CryptoPlugin>& plugins) {
@@ -91,7 +91,7 @@ static void handleFile(std::vector<CryptoPlugin>& plugins) {
     std::string inPath = readLine("Входной файл: ");
     if (!validatePath(inPath)) return;
     if (!fileExists(inPath)) {
-        std::cerr << "Файл не найден: " << inPath << std::endl;
+        std::cerr << "Файл не найден, создайте файл для дальнейшей работы с ним: " << inPath << std::endl;
         return;
     }
 
@@ -147,7 +147,7 @@ void runMainMenu(std::vector<CryptoPlugin>& plugins) {
     bool running = true;
     while (running) {
         std::cout << "\n========================================" << std::endl;
-        std::cout << "  Криптографическое приложение" << std::endl;
+        std::cout << "  Sentinel (Часовой): Crypto algorithm" << std::endl;
         std::cout << "========================================" << std::endl;
         std::cout << "  1. Шифрование/дешифрование текста" << std::endl;
         std::cout << "  2. Шифрование/дешифрование файла" << std::endl;

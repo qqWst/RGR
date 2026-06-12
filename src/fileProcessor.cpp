@@ -1,5 +1,5 @@
-#include "fileProcessor.h"
-#include "utils.h"
+#include "../include/fileProcessor.h"
+#include "../include/utils.h"
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -58,7 +58,7 @@ static bool processFileStream(const CryptoPlugin& plugin,
                               bool isEncrypt) {
     try {
         if (!fileExists(inputPath)) {
-            std::cerr << "Файл не найден: " << inputPath << std::endl;
+            std::cerr << "Файл не найден, создайте файл для дальнейшей работы с ним: " << inputPath << std::endl;
             return false;
         }
         if (!ensureDirectoryExists(outputPath)) return false;

@@ -1,6 +1,6 @@
-#include "libraryLoader.h"
+#include "../include/libraryLoader.h"
 #include "../include/menu.h"
-#include "utils.h"
+#include "../include/utils.h"
 #include <iostream>
 #include <clocale>
 #include <exception>

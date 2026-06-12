@@ -1,4 +1,4 @@
-#include "keyGenerator.h"
+#include "../include/keyGenerator.h"
 #include <stdexcept>
 
 std::vector<uint8_t> generateKeyForPlugin(const CryptoPlugin& plugin, int param) {

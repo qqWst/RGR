@@ -1,4 +1,4 @@
-#include "textProcessor.h"
+#include "../include/textProcessor.h"
 #include "utils.h"
 #include <stdexcept>
 
