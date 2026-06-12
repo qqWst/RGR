@@ -1,4 +1,5 @@
 // Плагин: протокол Фиат-Шамир (доказательство с нулевым разглашением).
+// Адаптирован под обычный интерфейс шифр/дешифр:
 //   encrypt(message, private_key) → доказательство в виде байт
 //   decrypt(proof,   public_key)  → "VERIFIED" или "FAILED"
 
@@ -85,20 +86,18 @@ uint64_t generatePrime(int bits) {
     }
 }
 
-// Парсинг ключа формата "n,X" где X — либо S, либо V
-bool parseKey(const uint8_t* key, size_t keySize, uint64_t& n, uint64_t& x) {
+bool parseKey(const uint8_t* key, size_t keySize, uint64_t& a, uint64_t& b) {
     char buf[64] = {0};
     if (keySize >= sizeof(buf)) return false;
     memcpy(buf, key, keySize);
     char* comma = strchr(buf, ',');
     if (!comma) return false;
     *comma = '\0';
-    n = strtoull(buf, nullptr, 10);
-    x = strtoull(comma + 1, nullptr, 10);
-    return n > 1 && x > 0;
+    a = strtoull(buf, nullptr, 10);
+    b = strtoull(comma + 1, nullptr, 10);
+    return a > 1 && b > 0;
 }
 
-// Хеш-функция для генерации challenge (детерминированная)
 int hashToBit(uint64_t x, int round) {
     uint64_t h = 0xCAFEBABE;
     h = h * 31 + x;
@@ -106,13 +105,11 @@ int hashToBit(uint64_t x, int round) {
     return static_cast<int>(h & 1);
 }
 
-} // namespace
+}
 
 extern "C" {
 
-EXPORT const char* getAlgorithmName() {
-    return "Fiat-Shamir (доказательство знания секрета)";
-}
+EXPORT const char* getAlgorithmName() { return "Fiat-Shamir (доказательство знания секрета)"; }
 
 EXPORT const char* getKeyInfo() {
     return "Протокол доказательства с нулевым разглашением (ZKP).\n"
@@ -132,7 +129,7 @@ EXPORT const char* getKeyInfo() {
            "\n"
            "3. \"Дешифрование\" доказательства (пункт 1, режим 2):\n"
            "     Введите доказательство (hex) и открытый ключ \"n,V\".\n"
-           "     Результат: VERIFIED или FAILED \n"
+           "     Результат: VERIFIED или FAILED\n"
            "\n"
            "Шифрование (создание доказательства): ключ \"n,S\".\n"
            "Дешифрование (проверка):              ключ \"n,V\".";
@@ -141,7 +138,6 @@ EXPORT const char* getKeyInfo() {
 EXPORT size_t getMinKeySize() { return 3; }
 EXPORT size_t getMaxKeySize() { return 128; }
 
-// encrypt = создание доказательства знания S
 EXPORT int encrypt(const uint8_t* data, size_t dataSize,
                    const uint8_t* key, size_t keySize,
                    uint8_t* output, size_t* outputSize) {
@@ -155,7 +151,6 @@ EXPORT int encrypt(const uint8_t* data, size_t dataSize,
     uint64_t V = (S * S) % n;
     srand(static_cast<unsigned>(time(nullptr)));
 
-    // Формируем доказательство как текстовую строку
     std::ostringstream proof;
     proof << "FS|" << n << "|" << V;
 
@@ -174,7 +169,6 @@ EXPORT int encrypt(const uint8_t* data, size_t dataSize,
     return 0;
 }
 
-// decrypt = проверка доказательства
 EXPORT int decrypt(const uint8_t* data, size_t dataSize,
                    const uint8_t* key, size_t keySize,
                    uint8_t* output, size_t* outputSize) {
@@ -196,7 +190,6 @@ EXPORT int decrypt(const uint8_t* data, size_t dataSize,
         return writeResult("FAILED: неверный формат доказательства");
     }
 
-    // Разбираем доказательство по разделителю '|'
     std::vector<std::string> parts;
     size_t pos = 0;
     while (pos < proofStr.size()) {
@@ -237,16 +230,15 @@ EXPORT int decrypt(const uint8_t* data, size_t dataSize,
 
     std::ostringstream result;
     if (passed == numRounds) {
-        result << "VERIFIED ✓ Доказательство подлинно ("
-               << passed << "/" << numRounds << " раундов пройдено)";
+        result << "VERIFIED: доказательство верно ("
+               << passed << "/" << numRounds << " раундов)";
     } else {
-        result << "FAILED ✗ Доказательство НЕ подлинно ("
-               << passed << "/" << numRounds << " раундов пройдено)";
+        result << "FAILED: доказательство неверно ("
+               << passed << "/" << numRounds << " раундов)";
     }
     return writeResult(result.str());
 }
 
-// Генерация пары ключей
 EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
     if (!keyBuffer || !keyBufferSize) return -1;
     (void)param;
@@ -268,8 +260,7 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
 
     char buf[256];
     int w = snprintf(buf, sizeof(buf),
-                     "PUB (для проверки): %llu,%llu\n"
-                     "PRIV (для создания доказательств): %llu,%llu",
+                     "PUB:%llu,%llu PRIV:%llu,%llu",
                      (unsigned long long)n, (unsigned long long)V,
                      (unsigned long long)n, (unsigned long long)S);
     if (w < 0 || static_cast<size_t>(w) >= *keyBufferSize) return -3;

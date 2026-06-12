@@ -10,7 +10,7 @@ int main() {
 
     // Глобальный обработчик исключений — обеспечивает отказоустойчивость (п. 4.2 ТЗ)
     try {
-        // Пароль для доступа к приложению (п. 2.3 алгоритма)
+        // Пароль для доступа к приложению 
         const std::string appPassword = "qqww2233";
 
         // Шаг 2: вход пользователя
@@ -19,9 +19,9 @@ int main() {
             return 1;
         }
 
-        // Шаг 3: загрузка плагинов - ИСПРАВЛЕННЫЙ ПУТЬ
+        // Шаг 3: загрузка плагинов
         std::cout << "Загрузка плагинов..." << std::endl;
-        std::vector<CryptoPlugin> plugins = loadAllPlugins("build/plugins");  // ← ИЗМЕНЕНО
+        std::vector<CryptoPlugin> plugins = loadAllPlugins("build/plugins");
         std::cout << "Загружено: " << plugins.size() << std::endl;
 
         // Шаг 4: главное меню

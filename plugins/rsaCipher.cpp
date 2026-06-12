@@ -25,14 +25,14 @@ uint64_t mulMod(uint64_t a, uint64_t b, uint64_t mod) {
     return static_cast<uint64_t>((static_cast<BigInt>(a) * b) % mod);
 }
 
-// Возведение в степень по модулю
-uint64_t modPow(uint64_t base, uint64_t exp, uint64_t mod) {
+uint64_t binMod(uint64_t base, uint64_t power, uint64_t modulo) {
+    base %= modulo;
+    if (modulo > 1) power %= modulo - 1;
     uint64_t result = 1;
-    base %= mod;
-    while (exp > 0) {
-        if (exp & 1) result = mulMod(result, base, mod);
-        exp >>= 1;
-        base = mulMod(base, base, mod);
+    while (power > 0) {
+        if (power & 1) result = mulMod(result, base, modulo);
+        base = mulMod(base, base, modulo);
+        power >>= 1;
     }
     return result;
 }
@@ -43,29 +43,44 @@ uint64_t gcdU(uint64_t a, uint64_t b) {
 }
 
 // Расширенный алгоритм Евклида для модульного обратного
-int64_t modInverse(int64_t a, int64_t m) {
-    int64_t g = a, x = 1, y = 0;
-    int64_t g1 = m, x1 = 0, y1 = 1;
-    while (g1 != 0) {
-        int64_t q = g / g1;
-        int64_t tg = g - q * g1, tx = x - q * x1, ty = y - q * y1;
-        g = g1; x = x1; y = y1;
-        g1 = tg; x1 = tx; y1 = ty;
+uint64_t modNegative(uint64_t base, uint64_t modulo) {
+    base = base % modulo;
+    uint64_t m0 = modulo;
+    int64_t u1 = 0, u2 = 1, u3;
+    uint64_t q = modulo / base;
+    uint64_t r = modulo % base;
+    uint64_t r0;
+    while (r > 0) {
+        r0 = r;
+        u3 = u1 - u2 * q;
+        modulo = base; base = r;
+        u1 = u2; u2 = u3;
+        q = modulo / base;
+        r = modulo % base;
     }
-    if (g != 1) return -1;
-    return (x % m + m) % m;
+    if (r0 != 1) return 0;
+    return (u3 > 0) ? u3 : u3 + m0;
 }
 
 // Тест Миллера-Рабина для проверки простоты больших чисел
 bool millerRabinTest(uint64_t n, uint64_t a) {
+    // Шаг 1: Проверка делимости
+    // Если n делится на a, то n может быть равно a (тогда a простое)
+    // или n составное (если a < n и делится без остатка)
     if (n % a == 0) return n == a;
+    // Шаг 2: Представляем n-1 как d * 2^r (где d нечётное)
     uint64_t d = n - 1;
     int r = 0;
-    while ((d & 1) == 0) { d >>= 1; r++; }
+    while ((d & 1) == 0) { d >>= 1; r++;  } // Увеличиваем счётчик степени двойки
 
-    uint64_t x = modPow(a, d, n);
+    // Шаг 3: Вычисляем a^d mod n (первое свидетельство)
+    uint64_t x = binMod(a, d, n);
+
+    // Шаг 4: Проверка тривиальных случаев
+    // Если x ≡ 1 (mod n) или x ≡ -1 (mod n), то n вероятно простое
     if (x == 1 || x == n - 1) return true;
-
+    // Шаг 5: Последовательно возводим в квадрат r-1 раз
+    // Проверяем, появится ли -1 на каком-то шаге
     for (int i = 0; i < r - 1; ++i) {
         x = mulMod(x, x, n);
         if (x == n - 1) return true;
@@ -89,9 +104,15 @@ bool isPrime(uint64_t n) {
 
 // Случайное 64-битное число (комбинируем несколько rand())
 uint64_t rand64() {
+    // 1. Инициализируем 64-битный результат нулём
     uint64_t r = 0;
+    // 2. Выполняем 4 итерации (4 * 16 бит = 64 бита)
     for (int i = 0; i < 4; ++i) {
-        r = (r << 16) | (static_cast<uint64_t>(rand()) & 0xFFFF);
+        // 3. Сдвигаем текущий результат влево на 16 бит
+        //    Освобождаем место для новых 16 бит в младших разрядах
+        r = (r << 16) |
+            // 4. Получаем 16 бит от rand() и добавляем их в младшие разряды
+            (static_cast<uint64_t>(rand()) & 0xFFFF);
     }
     return r;
 }
@@ -99,31 +120,65 @@ uint64_t rand64() {
 // Случайное простое число в диапазоне [low, high]
 uint64_t randomPrime(uint64_t low, uint64_t high) {
     while (true) {
+        // 1. Вычисляем размер диапазона
         uint64_t range = high - low + 1;
+        // 2. Генерируем случайное число в диапазоне [low, high]
         uint64_t candidate = low + (rand64() % range);
+        // 3. Делаем число нечётным (если чётное, то единственное простое - 2)
+        // устанавливаем младший бит в единицу
         if (candidate % 2 == 0) candidate |= 1;
+        // Шаг 4: Проверяем результат
+        // candidate <= high - защита от переполнения (если low был чётным и high+1)
         if (candidate <= high && isPrime(candidate)) return candidate;
     }
 }
 
 // Разбор ключа "n,e"
+// Функция преобразует строковый ключ формата "модуль,экспонента" в числа
+// Пример: "3233,17" -> n=3233, exp=17
+// Возвращает true при успешном разборе, false при ошибке
 bool parseKey(const uint8_t* key, size_t keySize, uint64_t& n, uint64_t& exp) {
+    // Шаг 1: Создаём буфер для строковой копии ключа
+    // Размер 128 байт достаточно для большинства ключей RSA
     char buf[128] = {0};
+
+    // Шаг 2: Проверяем, что ключ не превышает размер буфера
     if (keySize >= sizeof(buf)) return false;
+
+    // Шаг 3: Копируем двоичные данные в буфер
+    // key - указатель на начало данных
+    // keySize - количество байт для копирования
     memcpy(buf, key, keySize);
+
+    // Шаг 4: Добавляем нуль-терминатор в конец строки
     buf[keySize] = '\0';
 
+    // Шаг 5: Ищем запятую-разделитель в строке
     char* comma = strchr(buf, ',');
+
+    // Шаг 6: Если запятая не найдена - формат неверный
     if (!comma) return false;
+
+    // Шаг 7: Заменяем запятую на нуль-терминатор
+    // Это разделяет строку на две части: первое число и второе число
     *comma = '\0';
 
+    // Шаг 8: Преобразуем первую часть (до запятой) в число (n - модуль)
+    // strtoull = string to unsigned long long
     n   = strtoull(buf, nullptr, 10);
+
+    // Шаг 9: Преобразуем вторую часть (после запятой) в число (exp - экспонента)
+    // comma + 1 - указатель на символ после запятой
     exp = strtoull(comma + 1, nullptr, 10);
+    // Шаг 10: Проверяем, что оба числа положительные
     return (n > 0 && exp > 0);
 }
 
 } // namespace
 
+//директива линковки 
+//указывает C++ компилятору использовать
+//C-стиль именования и линковки для функций внутри блока
 extern "C" {
 
 EXPORT const char* getAlgorithmName() {
@@ -152,7 +207,7 @@ EXPORT int encrypt(const uint8_t* data, size_t dataSize,
 
     for (size_t i = 0; i < dataSize; ++i) {
         uint64_t m = data[i];
-        uint64_t c = modPow(m, e, n);
+        uint64_t c = binMod(m, e, n);
         // Записываем 8 байт (старшие первыми)
         for (int b = 7; b >= 0; --b) {
             output[i * 8 + (7 - b)] = static_cast<uint8_t>((c >> (b * 8)) & 0xFF);
@@ -179,7 +234,7 @@ EXPORT int decrypt(const uint8_t* data, size_t dataSize,
         for (int b = 0; b < 8; ++b) {
             c = (c << 8) | data[i * 8 + b];
         }
-        uint64_t m = modPow(c, d, n);
+        uint64_t m = binMod(c, d, n);
         output[i] = static_cast<uint8_t>(m & 0xFF);
     }
     *outputSize = outCount;
@@ -218,7 +273,7 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
         }
     }
 
-    int64_t d = modInverse(static_cast<int64_t>(e), static_cast<int64_t>(phi));
+    int64_t d = modNegative(static_cast<int64_t>(e), static_cast<int64_t>(phi));
     if (d < 0) return -11;
 
     char buf[128];

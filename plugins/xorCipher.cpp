@@ -11,12 +11,11 @@
 
 extern "C" {
 
-EXPORT const char* getAlgorithmName() {
-    return "XOR (Гаммирование)";
-}
+EXPORT const char* getAlgorithmName() { return "XOR (Гаммирование)"; }
 
 EXPORT const char* getKeyInfo() {
-    return "Ключ — произвольная строка байт (1-256). Симметричный шифр.";
+    return "Симметричный шифр. Ключ — произвольная строка байт (1-256).\n"
+           "Используется циклический XOR данных с ключом.";
 }
 
 EXPORT size_t getMinKeySize() { return 1; }
@@ -49,7 +48,6 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
 
     srand(static_cast<unsigned>(time(nullptr)));
     for (size_t i = 0; i < keyLen; ++i) {
-        // Печатные символы для удобства
         keyBuffer[i] = static_cast<uint8_t>('!' + (rand() % 93));
     }
     *keyBufferSize = keyLen;

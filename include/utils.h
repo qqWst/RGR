@@ -5,9 +5,9 @@
 #include <vector>
 #include <cstdint>
 
-bool fileExists(const std::string& path);
-bool ensureDirectoryExists(const std::string& filePath);
-bool validatePath(const std::string& path);
+bool fileExists(const std::string& path); //проверка существования файла
+bool ensureDirectoryExists(const std::string& filePath); //проверка существования директория
+bool validatePath(const std::string& path); //проверка валидности пути
 
 std::vector<uint8_t> stringToBytes(const std::string& str);
 std::string bytesToString(const std::vector<uint8_t>& data);
@@ -17,6 +17,7 @@ std::vector<uint8_t> hexToBytes(const std::string& hex);
 int readInt(const std::string& prompt);
 std::string readLine(const std::string& prompt);
 
+//функция авторизации
 bool login(const std::string& expectedPassword);
 
 // Коды ошибок криптографических операций.
