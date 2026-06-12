@@ -4,10 +4,13 @@
 #include <cstddef>
 #include <cstdint>
 
-using GetAlgorithmNameFunc = const char* (*)();
-using GetKeyInfoFunc = const char* (*)();
-using GetMinKeySizeFunc = size_t (*)();
-using GetMaxKeySizeFunc = size_t (*)();
+// Унифицированный C-интерфейс для всех криптографических плагинов.
+//(*)() - указатель на функцию
+
+using GetAlgorithmNameFunc = const char* (*)();     
+using GetKeyInfoFunc       = const char* (*)();
+using GetMinKeySizeFunc    = size_t (*)();
+using GetMaxKeySizeFunc    = size_t (*)();
 
 using EncryptFunc = int (*)(const uint8_t* data, size_t dataSize,
                             const uint8_t* key, size_t keySize,

@@ -5,18 +5,19 @@
 #include <string>
 #include <vector>
 
+//Структура каждого крипто-плагина
 struct CryptoPlugin {
-    std::string filePath;
-    std::string algorithmName;
+    std::string filePath;       //путь
+    std::string algorithmName;  //имя алгоритма
     void* handle = nullptr;
 
     GetAlgorithmNameFunc getAlgorithmName = nullptr;
-    EncryptFunc encrypt = nullptr;
-    DecryptFunc decrypt = nullptr;
-    GenerateKeyFunc generateKey = nullptr;
-    GetMinKeySizeFunc getMinKeySize = nullptr;
-    GetMaxKeySizeFunc getMaxKeySize = nullptr;
-    GetKeyInfoFunc getKeyInfo = nullptr;
+    GetKeyInfoFunc       getKeyInfo       = nullptr;
+    GetMinKeySizeFunc    getMinKeySize    = nullptr;
+    GetMaxKeySizeFunc    getMaxKeySize    = nullptr;
+    EncryptFunc          encrypt          = nullptr;
+    DecryptFunc          decrypt          = nullptr;
+    GenerateKeyFunc      generateKey      = nullptr;
 };
 
 bool loadPlugin(const std::string& path, CryptoPlugin& plugin);

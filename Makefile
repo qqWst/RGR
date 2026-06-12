@@ -1,5 +1,3 @@
-# Makefile для криптографического приложения
-
 CXX        := g++
 CXXFLAGS   := -std=c++17 -Wall -Wextra -O2 -Iinclude
 LDFLAGS    := -ldl
@@ -29,7 +27,7 @@ PLUGIN_OUT  := $(BUILD_DIR)/plugins
 
 APP_SOURCES := $(wildcard $(SRC_DIR)/*.cpp)
 APP_OBJECTS := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(APP_SOURCES))
-APP_TARGET  := $(BIN_DIR)/sentinel
+APP_TARGET  := $(BIN_DIR)/cryptoApp
 
 PLUGIN_SOURCES := $(wildcard $(PLUGIN_DIR)/*.cpp)
 PLUGIN_TARGETS := $(patsubst $(PLUGIN_DIR)/%.cpp, $(PLUGIN_OUT)/%.$(LIB_EXT), $(PLUGIN_SOURCES))
@@ -60,7 +58,7 @@ $(PLUGIN_OUT)/%.$(LIB_EXT): $(PLUGIN_DIR)/%.cpp
 
 run: all
 	@echo "==> Запуск приложения"
-	@cd $(BIN_DIR) && ./sentinel
+	@cd $(BIN_DIR) && ./cryptoApp
 
 clean:
 	@echo "==> Очистка"
