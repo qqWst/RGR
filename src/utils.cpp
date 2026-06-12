@@ -117,16 +117,13 @@ std::string readLine(const std::string& prompt) {
 }
 
 bool login(const std::string& expectedPassword) {
-    std::cout << "========================================" << std::endl;
-    std::cout << "       Авторизация пользователя" << std::endl;
-    std::cout << "========================================" << std::endl;
+    std::cout << "\n       Авторизация пользователя" << std::endl;
 
     std::string entered = readLine("Введите пароль: ");
 
     switch (entered == expectedPassword ? 1 : 0) {
         case 1:
             std::cout << "Доступ разрешён." << std::endl;
-            std::cout << "========================================" << std::endl;
             return true;
         case 0:
         default:

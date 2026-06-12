@@ -223,7 +223,6 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
     
     uint64_t v = modPow(s, 2, n);
     
-    // Минимальный вывод - только ключи, без кастов
     char buf[128];
     int written = snprintf(buf, sizeof(buf),
                           "%llu,%llu\n%llu,%llu",
