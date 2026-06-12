@@ -40,3 +40,21 @@ std::string decryptText(const CryptoPlugin& plugin,
     output.resize(outputSize);
     return bytesToString(output);
 }
+
+std::vector<uint8_t> decryptToBytes(const CryptoPlugin& plugin,
+                                     const std::vector<uint8_t>& cipherData,
+                                     const std::vector<uint8_t>& key) {
+    size_t outputSize = cipherData.size() * 2 + 256;
+    std::vector<uint8_t> output(outputSize);
+
+    int result = plugin.decrypt(cipherData.data(), cipherData.size(),
+                                key.data(), key.size(),
+                                output.data(), &outputSize);
+
+    if (result != 0) {
+        throw std::runtime_error("Ошибка дешифрования (код: " + std::to_string(result) + ")");
+    }
+
+    output.resize(outputSize);
+    return output;
+}

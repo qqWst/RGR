@@ -64,8 +64,15 @@ static void handleText(std::vector<CryptoPlugin>& plugins) {
                     std::cerr << "Некорректный hex." << std::endl;
                     return;
                 }
-                std::string result = decryptText(plugin, cipher, key);
-                std::cout << "Результат: " << result << std::endl;
+                std::vector<uint8_t> result = decryptToBytes(plugin, cipher, key);
+                
+                // Выводим результат как байты
+                std::cout << "Результат: ";
+                for (auto b : result) {
+                    std::cout << (int)b;
+                }
+                std::cout << std::endl;
+                std::cout << "Результат (hex): " << bytesToHex(result) << std::endl;
                 break;
             }
             case CryptoAction::Back:

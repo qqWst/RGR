@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <ctime>
 #include <vector>
+#include <string>
 
 #ifdef _WIN32
 #define EXPORT __declspec(dllexport)
@@ -225,10 +226,9 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
     
     // Минимальный вывод - только ключи, без кастов
     char buf[128];
-    int written = snprintf(buf, sizeof(buf),
-                          "%llu,%llu\n%llu,%llu",
-                          n, s,
-                          n, v);
+    std::string keyStr = std::to_string(n) + "," + std::to_string(s) + "\n" + 
+                        std::to_string(n) + "," + std::to_string(v);
+    int written = snprintf(buf, sizeof(buf), "%s", keyStr.c_str());
     
     if (written < 0 || written >= (int)*keyBufferSize) {
         return -3;
