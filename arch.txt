@@ -1,23 +1,59 @@
-crypto_app/
-├── Makefile
-├── include/
-│   ├── cryptoApi.h
-│   ├── libraryLoader.h
-│   ├── textProcessor.h
-│   ├── fileProcessor.h
-│   ├── keyGenerator.h
-│   ├── menu.h
-│   └── utils.h
-├── src/
-│   ├── main.cpp
-│   ├── libraryLoader.cpp
-│   ├── textProcessor.cpp
-│   ├── fileProcessor.cpp
-│   ├── keyGenerator.cpp
-│   ├── menu.cpp
-│   └── utils.cpp
-└── plugins/
-    ├── rsaCipher.cpp
-    ├── xorCipher.cpp
-    ├── rabinCipher.cpp
-    └── shamirCipher.cpp
+sentinel/
+│
+├── build/ # Артефакты сборки
+│ ├── obj/ # Объектные файлы (.o)
+│ │ ├── fileProcessor.o
+│ │ ├── keyGenerator.o
+│ │ ├── libraryLoader.o
+│ │ ├── main.o
+│ │ ├── menu.o
+│ │ ├── textProcessor.o
+│ │ └── utils.o
+│ ├── plugins/ # Собранные библиотеки плагинов
+│ │ ├── diffie-hellman.so
+│ │ ├── fiatShamir.so
+│ │ ├── rabinCipher.so
+│ │ ├── rsaCipher.so
+│ │ ├── shamirCipher.so
+│ │ └── xorCipher.so
+│ └── sentinel # Исполняемый файл
+│
+├── include/ # Заголовочные файлы
+│ ├── cryptoApi.h # API для криптоопераций
+│ ├── fileProcessor.h # Обработка файлов
+│ ├── keyGenerator.h # Генерация ключей
+│ ├── libraryLoader.h # Загрузка плагинов
+│ ├── menu.h # Текст. интерфейс
+│ ├── textProcessor.h # Обработка текста
+│ └── utils.h # Утилиты
+│
+├── keys/ # Сгенерированные ключи
+│ ├── FS.txt # Fiat-Shamir ключи
+│ ├── rsa.txt # RSA ключи
+│ └── shamir.txt # Shamir ключи
+│
+├── plugins/ # Исходный код плагинов
+│ ├── diffie-hellmanCipher.cpp # Diffie-Hellman
+│ ├── fiatShamirCipher.cpp # Fiat-Shamir
+│ ├── rabinCipher.cpp # Rabin
+│ ├── rsaCipher.cpp # RSA
+│ ├── shamirCipher.cpp # Shamir
+│ └── xorCipher.cpp # XOR
+│
+├── src/ # Исходный код приложения
+│ ├── fileProcessor.cpp
+│ ├── keyGenerator.cpp
+│ ├── libraryLoader.cpp
+│ ├── main.cpp
+│ ├── menu.cpp
+│ ├── textProcessor.cpp
+│ └── utils.cpp
+│
+├── testFiles/ # Тестовые файлы
+│ ├── Kon.mp3 # Аудио тест
+│ └── NGTU.jpg # Изображение тест
+│
+├── arch.txt # Архитектурные заметки
+├── Makefile # Система сборки
+├── NGTU.jpg # Логотип проекта
+└── README.md # Документация
