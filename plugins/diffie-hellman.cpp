@@ -153,7 +153,8 @@ EXPORT const char* getKeyInfo() {
 
 EXPORT size_t getMinKeySize() { return 7; }
 EXPORT size_t getMaxKeySize() { return 128; }
-EXPORT int encrypt(const uint8_t* /*data*/, size_t /*dataSize*/,
+
+EXPORT int encrypt(const uint8_t* data, size_t dataSize,
                    const uint8_t* key, size_t keySize,
                    uint8_t* output, size_t* outputSize) {
     if (!key || !output || !outputSize) return -1;

@@ -64,15 +64,8 @@ static void handleText(std::vector<CryptoPlugin>& plugins) {
                     std::cerr << "Некорректный hex." << std::endl;
                     return;
                 }
-                std::vector<uint8_t> result = decryptToBytes(plugin, cipher, key);
-                
-                // Выводим результат как байты
-                std::cout << "Результат: ";
-                for (auto b : result) {
-                    std::cout << (int)b;
-                }
-                std::cout << std::endl;
-                std::cout << "Результат (hex): " << bytesToHex(result) << std::endl;
+                std::string result = decryptText(plugin, cipher, key);
+                std::cout << "Результат: " << result << std::endl;
                 break;
             }
             case CryptoAction::Back:
@@ -82,7 +75,6 @@ static void handleText(std::vector<CryptoPlugin>& plugins) {
         std::cerr << "Ошибка: " << e.what() << std::endl;
     }
 }
-
 
 static void handleFile(std::vector<CryptoPlugin>& plugins) {
     int idx = selectPlugin(plugins);
@@ -154,12 +146,15 @@ void runMainMenu(std::vector<CryptoPlugin>& plugins) {
 
     bool running = true;
     while (running) {
-        std::cout << "\n  Sentinel (Часовой): Crypto algorithm\n\n";
+        std::cout << "\n========================================" << std::endl;
+        std::cout << "  Sentinel (Часовой): Crypto algorithm" << std::endl;
+        std::cout << "========================================" << std::endl;
         std::cout << "  1. Шифрование/дешифрование текста" << std::endl;
         std::cout << "  2. Шифрование/дешифрование файла" << std::endl;
         std::cout << "  3. Генератор ключей" << std::endl;
         std::cout << "  4. Информация о формате ключей" << std::endl;
-        std::cout << "  0. Выход\n\n";
+        std::cout << "  0. Выход" << std::endl;
+        std::cout << "========================================" << std::endl;
 
         int choice = readInt("Выбор: ");
         MainMenuOption option = static_cast<MainMenuOption>(choice);

@@ -13,9 +13,4 @@ std::string decryptText(const CryptoPlugin& plugin,
                         const std::vector<uint8_t>& cipherData,
                         const std::vector<uint8_t>& key);
 
-std::vector<uint8_t> decryptToBytes(const CryptoPlugin& plugin,
-                                     const std::vector<uint8_t>& cipherData,
-                                     const std::vector<uint8_t>& key);
-
-                                     
 #endif

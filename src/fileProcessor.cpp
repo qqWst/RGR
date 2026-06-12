@@ -105,7 +105,7 @@ static bool processFileStream(const CryptoPlugin& plugin,
                                  key.data(), key.size(), blockOut.data(), &outSize);
 
             if (result != 0) {
-                std::cerr << "\nОшибка обработки блока (код: " << result << ")" << std::endl;
+                std::cerr << "\nОшибка обработки файла. " << errorToMessage(result) << std::endl;
                 return false;
             }
 

@@ -1,4 +1,5 @@
 #include "../include/keyGenerator.h"
+#include "../include/utils.h"
 #include <stdexcept>
 
 std::vector<uint8_t> generateKeyForPlugin(const CryptoPlugin& plugin, int param) {
@@ -7,7 +8,7 @@ std::vector<uint8_t> generateKeyForPlugin(const CryptoPlugin& plugin, int param)
 
     int result = plugin.generateKey(buffer.data(), &bufferSize, param);
     if (result != 0) {
-        throw std::runtime_error("Ошибка генерации ключа (код: " + std::to_string(result) + ")");
+        throw std::runtime_error("Ошибка генерации ключа. " + errorToMessage(result));
     }
 
     buffer.resize(bufferSize);

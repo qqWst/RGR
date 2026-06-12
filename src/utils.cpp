@@ -117,17 +117,60 @@ std::string readLine(const std::string& prompt) {
 }
 
 bool login(const std::string& expectedPassword) {
-    std::cout << "\n       Авторизация пользователя" << std::endl;
+    std::cout << "========================================" << std::endl;
+    std::cout << "       Авторизация пользователя" << std::endl;
+    std::cout << "========================================" << std::endl;
 
     std::string entered = readLine("Введите пароль: ");
 
     switch (entered == expectedPassword ? 1 : 0) {
         case 1:
             std::cout << "Доступ разрешён." << std::endl;
+            std::cout << "========================================" << std::endl;
             return true;
         case 0:
         default:
             std::cerr << "Неверный пароль! Доступ запрещён." << std::endl;
             return false;
+    }
+}
+
+std::string errorToMessage(int code) {
+    switch (static_cast<CryptoError>(code)) {
+        case CryptoError::Ok:
+            return "Операция выполнена успешно.";
+
+        case CryptoError::NullPointer:
+            return "Внутренняя ошибка программы. Сообщите разработчику.";
+
+        case CryptoError::InvalidKey:
+            return "Неверный формат ключа. Проверьте формат через "
+                   "пункт меню \"Информация о формате ключей\".";
+
+        case CryptoError::BufferTooSmall:
+            return "Недостаточно памяти для результата. "
+                   "Попробуйте обработать данные меньшего размера.";
+
+        case CryptoError::KeyTooSmall:
+            return "Ключ слишком короткий для безопасного шифрования. "
+                   "Сгенерируйте новый ключ с большей битностью "
+                   "(например, для RSA — параметр 56).";
+
+        case CryptoError::InvalidDataSize:
+            return "Повреждены входные данные. "
+                   "Длина шифротекста должна быть кратной 8 байтам. "
+                   "Проверьте, что вы скопировали hex-строку полностью.";
+
+        case CryptoError::KeygenFailed:
+            return "Не удалось сгенерировать ключ. "
+                   "Попробуйте указать другое значение параметра битности.";
+
+        case CryptoError::NoInverse:
+            return "Не удалось вычислить обратный элемент. "
+                   "Повторите генерацию ключа.";
+
+        default:
+            return "Неизвестная ошибка (код: " + std::to_string(code) + "). "
+                   "Сообщите разработчику.";
     }
 }
