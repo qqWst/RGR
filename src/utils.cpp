@@ -115,3 +115,22 @@ std::string readLine(const std::string& prompt) {
     std::getline(std::cin, line);
     return line;
 }
+
+bool login(const std::string& expectedPassword) {
+    std::cout << "========================================" << std::endl;
+    std::cout << "       Авторизация пользователя" << std::endl;
+    std::cout << "========================================" << std::endl;
+
+    std::string entered = readLine("Введите пароль: ");
+
+    switch (entered == expectedPassword ? 1 : 0) {
+        case 1:
+            std::cout << "Доступ разрешён." << std::endl;
+            std::cout << "========================================" << std::endl;
+            return true;
+        case 0:
+        default:
+            std::cerr << "Неверный пароль! Доступ запрещён." << std::endl;
+            return false;
+    }
+}

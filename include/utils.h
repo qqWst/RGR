@@ -17,4 +17,6 @@ std::vector<uint8_t> hexToBytes(const std::string& hex);
 int readInt(const std::string& prompt);
 std::string readLine(const std::string& prompt);
 
+bool login(const std::string& expectedPassword);
+
 #endif

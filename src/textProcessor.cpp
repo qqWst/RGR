@@ -8,7 +8,7 @@ std::vector<uint8_t> encryptText(const CryptoPlugin& plugin,
     std::vector<uint8_t> inputData = stringToBytes(plainText);
 
     // Для RSA/Rabin/Шамира выход в 2 раза больше входа
-    size_t outputSize = inputData.size() * 4 + 256;
+    size_t outputSize = inputData.size() * 16 + 256;
     std::vector<uint8_t> output(outputSize);
 
     int result = plugin.encrypt(inputData.data(), inputData.size(),
@@ -26,7 +26,7 @@ std::vector<uint8_t> encryptText(const CryptoPlugin& plugin,
 std::string decryptText(const CryptoPlugin& plugin,
                         const std::vector<uint8_t>& cipherData,
                         const std::vector<uint8_t>& key) {
-    size_t outputSize = cipherData.size() * 2 + 256;
+    size_t outputSize = cipherData.size() * 16 + 256;
     std::vector<uint8_t> output(outputSize);
 
     int result = plugin.decrypt(cipherData.data(), cipherData.size(),

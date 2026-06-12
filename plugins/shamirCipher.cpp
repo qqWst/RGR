@@ -1,14 +1,5 @@
-// Учебная реализация бесключевого протокола Шамира.
-// Идея: Алиса и Боб имеют общее простое p, свои секретные пары (C, D), где C*D ≡ 1 (mod p-1).
-// Сообщение m шифруется как m^C mod p. Дешифрование: c^D mod p.
-//
-// В данном плагине реализован "один шаг": шифрование m -> m^C mod p,
-// и обратное преобразование c -> c^D mod p.
-// Полный 3-проходный протокол требует двух сторон;
-// для учебной демонстрации используем одну пару (C, D) — фактически это
-// схема "степени по модулю" с проверкой обратимости.
-//
-// Формат ключа: "p,C" (шифрование), "p,D" (дешифрование).
+// Учебная реализация бесключевого протокола Шамира с поддержкой 64-битного модуля.
+// Используется __int128 для умножения.
 
 #include <cstdint>
 #include <cstddef>
@@ -25,12 +16,18 @@
 
 namespace {
 
+using BigInt = unsigned __int128;
+
+uint64_t mulMod(uint64_t a, uint64_t b, uint64_t mod) {
+    return static_cast<uint64_t>((static_cast<BigInt>(a) * b) % mod);
+}
+
 uint64_t modPow(uint64_t base, uint64_t exp, uint64_t mod) {
     uint64_t r = 1; base %= mod;
     while (exp > 0) {
-        if (exp & 1) r = (r * base) % mod;
+        if (exp & 1) r = mulMod(r, base, mod);
         exp >>= 1;
-        base = (base * base) % mod;
+        base = mulMod(base, base, mod);
     }
     return r;
 }
@@ -53,19 +50,46 @@ int64_t modInverse(int64_t a, int64_t m) {
     return (x % m + m) % m;
 }
 
+bool millerRabinTest(uint64_t n, uint64_t a) {
+    if (n % a == 0) return n == a;
+    uint64_t d = n - 1;
+    int r = 0;
+    while ((d & 1) == 0) { d >>= 1; r++; }
+
+    uint64_t x = modPow(a, d, n);
+    if (x == 1 || x == n - 1) return true;
+    for (int i = 0; i < r - 1; ++i) {
+        x = mulMod(x, x, n);
+        if (x == n - 1) return true;
+    }
+    return false;
+}
+
 bool isPrime(uint64_t n) {
     if (n < 2) return false;
     if (n < 4) return true;
     if (n % 2 == 0) return false;
-    for (uint64_t i = 3; i * i <= n; i += 2)
-        if (n % i == 0) return false;
+    uint64_t witnesses[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37};
+    for (uint64_t a : witnesses) {
+        if (a >= n) break;
+        if (!millerRabinTest(n, a)) return false;
+    }
     return true;
+}
+
+uint64_t rand64() {
+    uint64_t r = 0;
+    for (int i = 0; i < 4; ++i) {
+        r = (r << 16) | (static_cast<uint64_t>(rand()) & 0xFFFF);
+    }
+    return r;
 }
 
 uint64_t randomPrime(uint64_t low, uint64_t high) {
     while (true) {
-        uint64_t c = low + (rand() % (high - low + 1));
-        if (c % 2 == 0) c++;
+        uint64_t range = high - low + 1;
+        uint64_t c = low + (rand64() % range);
+        if (c % 2 == 0) c |= 1;
         if (c <= high && isPrime(c)) return c;
     }
 }
@@ -87,14 +111,15 @@ bool parsePair(const uint8_t* key, size_t keySize, uint64_t& p, uint64_t& exp) {
 extern "C" {
 
 EXPORT const char* getAlgorithmName() {
-    return "Shamir (бесключевой протокол)";
+    return "Shamir (бесключевой, 64-битный модуль)";
 }
 
 EXPORT const char* getKeyInfo() {
-    return "Простое p (p > 255).\n"
+    return "Простое p — до 64 бит. Используется __int128 для арифметики.\n"
            "Шифрование: \"p,C\" — c = m^C mod p.\n"
            "Дешифрование: \"p,D\" — m = c^D mod p, где C*D ≡ 1 (mod p-1).\n"
-           "param при генерации = битность p (10-16).";
+           "param при генерации = битность p (32-62, рекомендуется 60).\n"
+           "Каждый байт шифруется в 8 байт.";
 }
 
 EXPORT size_t getMinKeySize() { return 3; }
@@ -108,15 +133,15 @@ EXPORT int encrypt(const uint8_t* data, size_t dataSize,
     uint64_t p = 0, C = 0;
     if (!parsePair(key, keySize, p, C)) return -2;
     if (p <= 255) return -4;
-    if (*outputSize < dataSize * 2) return -3;
+    if (*outputSize < dataSize * 8) return -3;
 
     for (size_t i = 0; i < dataSize; ++i) {
         uint64_t m = data[i];
         uint64_t c = modPow(m, C, p);
-        output[2 * i]     = static_cast<uint8_t>((c >> 8) & 0xFF);
-        output[2 * i + 1] = static_cast<uint8_t>(c & 0xFF);
+        for (int j = 7; j >= 0; --j) {
+            output[i * 8 + (7 - j)] = static_cast<uint8_t>((c >> (j * 8)) & 0xFF); }
     }
-    *outputSize = dataSize * 2;
+    *outputSize = dataSize * 8;
     return 0;
 }
 
@@ -124,16 +149,19 @@ EXPORT int decrypt(const uint8_t* data, size_t dataSize,
                    const uint8_t* key, size_t keySize,
                    uint8_t* output, size_t* outputSize) {
     if (!data || !key || !output || !outputSize) return -1;
-    if (dataSize % 2 != 0) return -5;
+    if (dataSize % 8 != 0) return -5;
 
     uint64_t p = 0, D = 0;
     if (!parsePair(key, keySize, p, D)) return -2;
 
-    size_t outCount = dataSize / 2;
+    size_t outCount = dataSize / 8;
     if (*outputSize < outCount) return -3;
 
     for (size_t i = 0; i < outCount; ++i) {
-        uint64_t c = (static_cast<uint64_t>(data[2 * i]) << 8) | data[2 * i + 1];
+        uint64_t c = 0;
+        for (int j = 0; j < 8; ++j) {
+            c = (c << 8) | data[i * 8 + j];
+        }
         uint64_t m = modPow(c, D, p);
         output[i] = static_cast<uint8_t>(m & 0xFF);
     }
@@ -146,7 +174,8 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
 
     srand(static_cast<unsigned>(time(nullptr)));
 
-    int bits = (param >= 10 && param <= 16) ? param : 12;
+    int bits = (param >= 32 && param <= 62) ? param : 60;
+
     uint64_t low  = 1ULL << (bits - 1);
     uint64_t high = (1ULL << bits) - 1;
     if (low <= 256) low = 257;
@@ -154,10 +183,18 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
     uint64_t p = randomPrime(low, high);
     uint64_t phi = p - 1;
 
-    // Подбираем C, взаимно простое с phi
+    // Подбираем C, взаимно простое с phi (начинаем с нечётного крупного значения)
     uint64_t C = 0;
-    for (uint64_t cand = 3; cand < phi; cand += 2) {
+    uint64_t start = phi / 2;
+    if ((start & 1) == 0) start++;
+    for (uint64_t cand = start; cand < phi; cand += 2) {
         if (gcdU(cand, phi) == 1) { C = cand; break; }
+    }
+    if (C == 0) {
+        // Запасной вариант — перебор с малых значений
+        for (uint64_t cand = 3; cand < phi; cand += 2) {
+            if (gcdU(cand, phi) == 1) { C = cand; break; }
+        }
     }
     if (C == 0) return -11;
 

@@ -1,8 +1,6 @@
-// Учебная реализация шифра Рабина.
-// Открытый ключ: n = p*q, где p,q — простые, p≡q≡3 (mod 4).
-// Шифр: c = m^2 mod n. Дешифрование даёт 4 корня, выбираем тот,
-// чьи последние 8 бит совпадают со старшими (используем избыточность).
-// Формат ключа: "n" (шифрование), "p,q" (дешифрование).
+// Учебная реализация шифра Рабина с поддержкой 64-битного модуля.
+// Используется __int128 для умножения. Паддинг: к байту b приписывается
+// 16-битная маска ~b, что почти исключает коллизии при выборе корня.
 
 #include <cstdint>
 #include <cstddef>
@@ -19,16 +17,23 @@
 
 namespace {
 
+using BigInt = unsigned __int128;
+
+uint64_t mulMod(uint64_t a, uint64_t b, uint64_t mod) {
+    return static_cast<uint64_t>((static_cast<BigInt>(a) * b) % mod);
+}
+
 uint64_t modPow(uint64_t base, uint64_t exp, uint64_t mod) {
     uint64_t r = 1; base %= mod;
     while (exp > 0) {
-        if (exp & 1) r = (r * base) % mod;
+        if (exp & 1) r = mulMod(r, base, mod);
         exp >>= 1;
-        base = (base * base) % mod;
+        base = mulMod(base, base, mod);
     }
     return r;
 }
 
+// Расширенный алгоритм Евклида (со знаком, без __int128)
 int64_t extGcd(int64_t a, int64_t b, int64_t& x, int64_t& y) {
     if (b == 0) { x = 1; y = 0; return a; }
     int64_t x1, y1;
@@ -37,20 +42,59 @@ int64_t extGcd(int64_t a, int64_t b, int64_t& x, int64_t& y) {
     return g;
 }
 
+// Сложение / вычитание по модулю без переполнения
+uint64_t addMod(uint64_t a, uint64_t b, uint64_t mod) {
+    return static_cast<uint64_t>((static_cast<BigInt>(a) + b) % mod);
+}
+
+uint64_t subMod(uint64_t a, uint64_t b, uint64_t mod) {
+    // (a - b) mod mod
+    if (a >= b) return (a - b) % mod;
+    return mod - ((b - a) % mod);
+}
+
+bool millerRabinTest(uint64_t n, uint64_t a) {
+    if (n % a == 0) return n == a;
+    uint64_t d = n - 1;
+    int r = 0;
+    while ((d & 1) == 0) { d >>= 1; r++; }
+
+    uint64_t x = modPow(a, d, n);
+    if (x == 1 || x == n - 1) return true;
+    for (int i = 0; i < r - 1; ++i) {
+        x = mulMod(x, x, n);
+        if (x == n - 1) return true;
+    }
+    return false;
+}
+
 bool isPrime(uint64_t n) {
     if (n < 2) return false;
     if (n < 4) return true;
     if (n % 2 == 0) return false;
-    for (uint64_t i = 3; i * i <= n; i += 2)
-        if (n % i == 0) return false;
+    uint64_t witnesses[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37};
+    for (uint64_t a : witnesses) {
+        if (a >= n) break;
+        if (!millerRabinTest(n, a)) return false;
+    }
     return true;
 }
 
-// Простое p такое, что p ≡ 3 (mod 4)
+uint64_t rand64() {
+    uint64_t r = 0;
+    for (int i = 0; i < 4; ++i) {
+        r = (r << 16) | (static_cast<uint64_t>(rand()) & 0xFFFF);
+    }
+    return r;
+}
+
+// Простое p ≡ 3 (mod 4)
 uint64_t randomBlumPrime(uint64_t low, uint64_t high) {
     while (true) {
-        uint64_t c = low + (rand() % (high - low + 1));
-        if (c % 4 != 3) c += (3 - c % 4 + 4) % 4;
+        uint64_t range = high - low + 1;
+        uint64_t c = low + (rand64() % range);
+        // Приводим к виду 4k+3
+        c = c | 3;
         if (c <= high && isPrime(c)) return c;
     }
 }
@@ -80,14 +124,15 @@ bool parsePair(const uint8_t* key, size_t keySize, uint64_t& p, uint64_t& q) {
 extern "C" {
 
 EXPORT const char* getAlgorithmName() {
-    return "Rabin (асимметричный шифр)";
+    return "Rabin (асимметричный, 64-битный модуль)";
 }
 
 EXPORT const char* getKeyInfo() {
     return "Шифрование: \"n\" (n = p*q, p≡q≡3 mod 4).\n"
            "Дешифрование: \"p,q\".\n"
-           "Для устранения неоднозначности байт дублируется (m = byte*256 + byte).\n"
-           "param при генерации = битность n (10-16).";
+           "Паддинг 16 бит: m = (b << 16) | (~b & 0xFFFF) для устранения неоднозначности.\n"
+           "param при генерации = битность n (32-62, рекомендуется 56).\n"
+           "Каждый байт шифруется в 8 байт.";
 }
 
 EXPORT size_t getMinKeySize() { return 1; }
@@ -100,17 +145,20 @@ EXPORT int encrypt(const uint8_t* data, size_t dataSize,
 
     uint64_t n = 0;
     if (!parseSingle(key, keySize, n)) return -2;
-    if (n <= 0xFFFF) return -4; // n должно вмещать m = byte*256 + byte
-    if (*outputSize < dataSize * 2) return -3;
+    // Нужно, чтобы m = (b<<16)|(~b&0xFFFF) < n, то есть n > 2^24
+    if (n <= 0xFFFFFF) return -4;
+    if (*outputSize < dataSize * 8) return -3;
 
     for (size_t i = 0; i < dataSize; ++i) {
-        // Дублируем байт для избыточности
-        uint64_t m = (static_cast<uint64_t>(data[i]) << 8) | data[i];
-        uint64_t c = (m * m) % n;
-        output[2 * i]     = static_cast<uint8_t>((c >> 8) & 0xFF);
-        output[2 * i + 1] = static_cast<uint8_t>(c & 0xFF);
+        uint8_t b = data[i];
+        uint64_t mask = static_cast<uint64_t>(~b & 0xFF);
+        uint64_t m = (static_cast<uint64_t>(b) << 16) | (mask << 8) | mask;
+        uint64_t c = mulMod(m, m, n);
+        for (int j = 7; j >= 0; --j) {
+            output[i * 8 + (7 - j)] = static_cast<uint8_t>((c >> (j * 8)) & 0xFF);
+        }
     }
-    *outputSize = dataSize * 2;
+    *outputSize = dataSize * 8;
     return 0;
 }
 
@@ -118,49 +166,53 @@ EXPORT int decrypt(const uint8_t* data, size_t dataSize,
                    const uint8_t* key, size_t keySize,
                    uint8_t* output, size_t* outputSize) {
     if (!data || !key || !output || !outputSize) return -1;
-    if (dataSize % 2 != 0) return -5;
+    if (dataSize % 8 != 0) return -5;
 
     uint64_t p = 0, q = 0;
     if (!parsePair(key, keySize, p, q)) return -2;
 
     uint64_t n = p * q;
-    size_t outCount = dataSize / 2;
+    size_t outCount = dataSize / 8;
     if (*outputSize < outCount) return -3;
 
-    // Коэффициенты CRT
+    // CRT: находим yp, yq такие, что yp*p + yq*q = 1
     int64_t yp = 0, yq = 0;
     extGcd(static_cast<int64_t>(p), static_cast<int64_t>(q), yp, yq);
+    // Приводим к положительным значениям по модулю n
+    uint64_t ypU = static_cast<uint64_t>(((yp % static_cast<int64_t>(n)) + static_cast<int64_t>(n)) % static_cast<int64_t>(n));
+    uint64_t yqU = static_cast<uint64_t>(((yq % static_cast<int64_t>(n)) + static_cast<int64_t>(n)) % static_cast<int64_t>(n));
 
     for (size_t i = 0; i < outCount; ++i) {
-        uint64_t c = (static_cast<uint64_t>(data[2 * i]) << 8) | data[2 * i + 1];
+        uint64_t c = 0;
+        for (int j = 0; j < 8; ++j) {
+            c = (c << 8) | data[i * 8 + j];
+        }
 
         uint64_t mp = modPow(c, (p + 1) / 4, p);
         uint64_t mq = modPow(c, (q + 1) / 4, q);
 
-        // 4 корня методом CRT
-        int64_t r1 =  (yp * static_cast<int64_t>(p) * static_cast<int64_t>(mq)
-                     + yq * static_cast<int64_t>(q) * static_cast<int64_t>(mp));
-        int64_t r2 =  (yp * static_cast<int64_t>(p) * static_cast<int64_t>(mq)
-                     - yq * static_cast<int64_t>(q) * static_cast<int64_t>(mp));
-        r1 = ((r1 % static_cast<int64_t>(n)) + n) % n;
-        r2 = ((r2 % static_cast<int64_t>(n)) + n) % n;
-        uint64_t roots[4] = {
-            static_cast<uint64_t>(r1),
-            static_cast<uint64_t>(r2),
-            n - static_cast<uint64_t>(r1),
-            n - static_cast<uint64_t>(r2)
-        };
+        // Комбинируем 4 корня через CRT
+        uint64_t a = mulMod(mulMod(ypU, p, n), mq, n);
+        uint64_t b = mulMod(mulMod(yqU, q, n), mp, n);
+        uint64_t r1 = addMod(a, b, n);
+        uint64_t r2 = subMod(a, b, n);
+        uint64_t roots[4] = { r1, r2, subMod(n, r1, n), subMod(n, r2, n) };
 
-        // Ищем корень с дублированными байтами
+        // Ищем корень с правильным паддингом: средний байт = младший = ~старший
         uint8_t found = 0;
         bool ok = false;
         for (int k = 0; k < 4; ++k) {
             uint64_t m = roots[k];
-            uint8_t hi = static_cast<uint8_t>((m >> 8) & 0xFF);
-            uint8_t lo = static_cast<uint8_t>(m & 0xFF);
-            if (hi == lo) { found = lo; ok = true; break; }
+            uint8_t hi  = static_cast<uint8_t>((m >> 16) & 0xFF);
+            uint8_t mid = static_cast<uint8_t>((m >> 8) & 0xFF);
+            uint8_t lo  = static_cast<uint8_t>(m & 0xFF);
+            uint8_t expectedMask = static_cast<uint8_t>(~hi);
+            if (mid == expectedMask && lo == expectedMask) {
+                found = hi;
+                ok = true;
+                break;
+            }
         }
-
         output[i] = ok ? found : 0;
     }
 
@@ -173,17 +225,19 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
 
     srand(static_cast<unsigned>(time(nullptr)));
 
-    int bits = (param >= 10 && param <= 16) ? param : 12;
-    uint64_t low  = 1ULL << ((bits / 2) - 1);
-    uint64_t high = (1ULL << (bits / 2)) - 1;
-    if (low < 7) low = 7;
+    int bits = (param >= 32 && param <= 62) ? param : 56;
+    int halfBits = bits / 2;
+
+    uint64_t low  = 1ULL << (halfBits - 1);
+    uint64_t high = (1ULL << halfBits) - 1;
+    if (low < 4096) low = 4096; // n гарантированно > 2^24
 
     uint64_t p = randomBlumPrime(low, high);
     uint64_t q;
     do { q = randomBlumPrime(low, high); } while (q == p);
 
     uint64_t n = p * q;
-    if (n <= 0xFFFF) return -10;
+    if (n <= 0xFFFFFF) return -10;
 
     char buf[128];
     int w = snprintf(buf, sizeof(buf), "PUB:%llu PRIV:%llu,%llu",
