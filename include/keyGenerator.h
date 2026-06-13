@@ -4,7 +4,6 @@
 #include "libraryLoader.h"
 #include <vector>
 
-//модуль генерации ключа
 
 std::vector<uint8_t> generateKeyForPlugin(const CryptoPlugin& plugin, int param);
 

@@ -4,8 +4,6 @@
 #include <cstddef>
 #include <cstdint>
 
-// Унифицированный C-интерфейс для всех криптографических плагинов.
-//(*)() - указатель на функцию
 
 using GetAlgorithmNameFunc = const char* (*)();     
 using GetKeyInfoFunc       = const char* (*)();

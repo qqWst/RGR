@@ -5,10 +5,9 @@
 #include <string>
 #include <vector>
 
-//Структура каждого крипто-плагина
 struct CryptoPlugin {
-    std::string filePath;       //путь
-    std::string algorithmName;  //имя алгоритма
+    std::string filePath;       
+    std::string algorithmName;  
     void* handle = nullptr;
 
     GetAlgorithmNameFunc getAlgorithmName = nullptr;

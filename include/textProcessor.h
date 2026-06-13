@@ -5,8 +5,6 @@
 #include <string>
 #include <vector>
 
-//высокоуровневый интерфейс для шифрования и дешифрования текста
-
 std::vector<uint8_t> encryptText(const CryptoPlugin& plugin,
                                   const std::string& plainText,
                                   const std::vector<uint8_t>& key);

@@ -8,26 +8,20 @@
 int main() {
     setlocale(LC_ALL, "");
 
-    // Глобальный обработчик исключений — обеспечивает отказоустойчивость (п. 4.2 ТЗ)
     try {
-        // Пароль для доступа к приложению 
         const std::string appPassword = "qqww2233";
 
-        // Шаг 2: вход пользователя
         if (!login(appPassword)) {
             std::cerr << "Программа завершает работу." << std::endl;
             return 1;
         }
 
-        // Шаг 3: загрузка плагинов
         std::cout << "Загрузка плагинов..." << std::endl;
         std::vector<CryptoPlugin> plugins = loadAllPlugins("plugins");
         std::cout << "Загружено: " << plugins.size() << std::endl;
 
-        // Шаг 4: главное меню
         runMainMenu(plugins);
 
-        // Корректная выгрузка
         unloadAllPlugins(plugins);
 
     } catch (const std::bad_alloc& e) {

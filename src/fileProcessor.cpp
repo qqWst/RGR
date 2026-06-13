@@ -5,14 +5,12 @@
 #include <iomanip>
 #include <string>
 
-// Получить размер файла в байтах
 static size_t getFileSize(const std::string& path) {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file.is_open()) return 0;
     return static_cast<size_t>(file.tellg());
 }
 
-// Простой прогресс-бар
 static void printProgress(size_t processed, size_t total) {
     if (total == 0) return;
 
@@ -28,9 +26,7 @@ static void printProgress(size_t processed, size_t total) {
               << processed << " / " << total << " байт)" << std::flush;
 }
 
-// Предупреждение о возможной долгой работе
 static bool confirmLargeFile(const std::string& algorithmName, size_t fileSize) {
-    // Для XOR работа быстрая — не предупреждаем
     if (algorithmName.find("XOR") != std::string::npos) return true;
 
     if (fileSize < WARN_FILE_SIZE) return true;
@@ -50,7 +46,6 @@ static bool confirmLargeFile(const std::string& algorithmName, size_t fileSize) 
     return choice == 1;
 }
 
-// Универсальная функция потоковой обработки файла
 static bool processFileStream(const CryptoPlugin& plugin,
                               const std::string& inputPath,
                               const std::string& outputPath,
@@ -81,9 +76,7 @@ static bool processFileStream(const CryptoPlugin& plugin,
             return false;
         }
 
-        // Буферы для потоковой обработки
         std::vector<uint8_t> blockIn(BLOCK_SIZE);
-        // Выход в 4 раза больше с запасом (для асимметричных алгоритмов)
         std::vector<uint8_t> blockOut(BLOCK_SIZE * 16 + 256);
 
         size_t processed = 0;
@@ -114,7 +107,6 @@ static bool processFileStream(const CryptoPlugin& plugin,
 
             processed += static_cast<size_t>(bytesRead);
 
-            // Обновляем прогресс не на каждом блоке (чтобы не тормозить вывод)
             if (firstBlock || processed == totalSize ||
                 (processed % (BLOCK_SIZE * 16) == 0)) {
                 printProgress(processed, totalSize);

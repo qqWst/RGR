@@ -6,7 +6,7 @@
 #include <iostream>
 
 static int selectPlugin(const std::vector<CryptoPlugin>& plugins) {
-    std::cout << "\n=== Доступные алгоритмы ===" << std::endl;
+    std::cout << "\n Доступные алгоритмы " << std::endl;
     for (size_t i = 0; i < plugins.size(); ++i) {
         std::cout << "  " << (i + 1) << ". " << plugins[i].algorithmName << std::endl;
     }
@@ -138,15 +138,12 @@ void runMainMenu(std::vector<CryptoPlugin>& plugins) {
 
     bool running = true;
     while (running) {
-        std::cout << "\n========================================" << std::endl;
-        std::cout << "  Криптографическое приложение" << std::endl;
-        std::cout << "========================================" << std::endl;
+        std::cout << "\n  Криптографическое приложение" << std::endl;
         std::cout << "  1. Шифрование/дешифрование текста" << std::endl;
         std::cout << "  2. Шифрование/дешифрование файла" << std::endl;
         std::cout << "  3. Генератор ключей" << std::endl;
         std::cout << "  4. Информация о формате ключей" << std::endl;
-        std::cout << "  0. Выход" << std::endl;
-        std::cout << "========================================" << std::endl;
+        std::cout << "  0. Выход\n\n";
 
         int choice = readInt("Выбор: ");
         MainMenuOption option = static_cast<MainMenuOption>(choice);
