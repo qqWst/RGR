@@ -1,8 +1,3 @@
-// Плагин: протокол Фиат-Шамир (доказательство с нулевым разглашением).
-// Адаптирован под обычный интерфейс шифр/дешифр:
-//   encrypt(message, private_key) → доказательство в виде байт
-//   decrypt(proof,   public_key)  → "VERIFIED" или "FAILED"
-
 #include <cstdint>
 #include <cstddef>
 #include <cstdlib>

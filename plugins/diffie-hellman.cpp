@@ -1,7 +1,3 @@
-// Плагин: протокол Диффи-Хеллмана
-// Работает ТОЛЬКО через генератор ключей.
-// Шифрование/дешифрование не поддерживаются (это не шифр, а протокол обмена ключами).
-
 #include <cstdint>
 #include <cstddef>
 #include <cstdlib>
@@ -129,27 +125,23 @@ EXPORT const char* getKeyInfo() {
 EXPORT size_t getMinKeySize() { return 1; }
 EXPORT size_t getMaxKeySize() { return 512; }
 
-// Шифрование не поддерживается
 EXPORT int encrypt(const uint8_t* /*data*/, size_t /*dataSize*/,
                    const uint8_t* /*key*/, size_t /*keySize*/,
                    uint8_t* /*output*/, size_t* /*outputSize*/) {
     return -2;
 }
 
-// Дешифрование не поддерживается
 EXPORT int decrypt(const uint8_t* /*data*/, size_t /*dataSize*/,
                    const uint8_t* /*key*/, size_t /*keySize*/,
                    uint8_t* /*output*/, size_t* /*outputSize*/) {
     return -2;
 }
 
-// Универсальная функция: в зависимости от param выполняет разные действия
 EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
     if (!keyBuffer || !keyBufferSize) return -1;
 
     srand(static_cast<unsigned>(time(NULL)));
 
-    //РЕЖИМ 1: Сгенерировать новую пару
     if (param == 0) {
         int bits = 20;
         uint64_t p = generateSafePrime(bits);
@@ -174,7 +166,6 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
         return 0;
     }
 
-    // РЕЖИМ 2: Вычислить общий ключ 
     cout << "\nВведите публичное значение партнёра (число): ";
     string partnerStr;
     getline(cin, partnerStr);
@@ -183,7 +174,6 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
     string privateStr;
     getline(cin, privateStr);
 
-    // Разбираем закрытый ключ
     uint64_t p = 0, g = 0, a = 0;
     if (!parsePrivateKey(privateStr, p, g, a)) {
         const char* err = "Ошибка: неверный формат закрытого ключа (нужно \"p,g,a\")";
@@ -194,7 +184,6 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
         return 0;
     }
 
-    // Разбираем публичное значение партнёра
     uint64_t partnerPublic = 0;
     try {
         partnerPublic = stoull(partnerStr);
@@ -216,7 +205,6 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
         return 0;
     }
 
-    // Вычисляем общий ключ: K = partnerPublic^a mod p
     uint64_t sharedKey = binMod(partnerPublic, a, p);
 
     char buf[256];
@@ -225,9 +213,7 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
                      "\n"
                      "Этот же ключ получит ваш партнёр, используя ваше\n"
                      "публичное значение и свой закрытый ключ.\n"
-                     "Используйте его как ключ для XOR-шифрования.",
-                     (unsigned long long)sharedKey);
-
+                     "Используйте его как ключ для XOR-шифрования.");
     if (w < 0 || (size_t)w >= *keyBufferSize) return -3;
     memcpy(keyBuffer, buf, w);
     *keyBufferSize = (size_t)w;
