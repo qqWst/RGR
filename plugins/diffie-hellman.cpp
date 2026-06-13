@@ -19,7 +19,6 @@ using namespace std;
 #define EXPORT __attribute__((visibility("default")))
 #endif
 
-// Вспомогательные функции (static - скрыты внутри плагина)
 static uint64_t binMod(uint64_t base, uint64_t power, uint64_t modulo) {
     base %= modulo;
     if (modulo > 1) power %= modulo - 1;
@@ -128,7 +127,7 @@ EXPORT const char* getKeyInfo() {
 }
 
 EXPORT size_t getMinKeySize() { return 1; }
-EXPORT size_t getMaxKeySize() { return 128; }
+EXPORT size_t getMaxKeySize() { return 512; }
 
 // Шифрование не поддерживается
 EXPORT int encrypt(const uint8_t* /*data*/, size_t /*dataSize*/,
@@ -150,7 +149,7 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
 
     srand(static_cast<unsigned>(time(NULL)));
 
-    // ===== РЕЖИМ 1: Сгенерировать новую пару =====
+    //РЕЖИМ 1: Сгенерировать новую пару
     if (param == 0) {
         int bits = 20;
         uint64_t p = generateSafePrime(bits);
@@ -175,7 +174,7 @@ EXPORT int generateKey(uint8_t* keyBuffer, size_t* keyBufferSize, int param) {
         return 0;
     }
 
-    // ===== РЕЖИМ 2: Вычислить общий ключ =====
+    // РЕЖИМ 2: Вычислить общий ключ 
     cout << "\nВведите публичное значение партнёра (число): ";
     string partnerStr;
     getline(cin, partnerStr);
